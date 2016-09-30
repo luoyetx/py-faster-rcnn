@@ -193,7 +193,7 @@ __C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
 __C.DATA_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
 
 # Model directory
-__C.MODELS_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'models', 'pascal_voc'))
+__C.MODELS_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'models', 'wider'))
 
 # Name (or path to) the matlab executable
 __C.MATLAB = 'matlab'
@@ -206,6 +206,9 @@ __C.USE_GPU_NMS = True
 
 # Default GPU device id
 __C.GPU_ID = 0
+
+# FDDB data DIR
+__C.FDDB_DIR = '/home/zhangjie/projects/JDA/data/fddb'
 
 
 def get_output_dir(imdb, net=None):

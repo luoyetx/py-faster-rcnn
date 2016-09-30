@@ -33,6 +33,12 @@ case $DATASET in
     echo "Not implemented: use experiments/scripts/faster_rcnn_end2end.sh for coco"
     exit
     ;;
+  wider)
+    TRAIN_IMDB="wider_train"
+    TEST_IMDB="wider_test"
+    PT_DIR="wider"
+    ITERS=40000
+    ;;
   *)
     echo "No dataset given"
     exit
@@ -50,13 +56,13 @@ time ./tools/train_faster_rcnn_alt_opt.py --gpu ${GPU_ID} \
   --cfg experiments/cfgs/faster_rcnn_alt_opt.yml \
   ${EXTRA_ARGS}
 
-set +x
-NET_FINAL=`grep "Final model:" ${LOG} | awk '{print $3}'`
-set -x
+# set +x
+# NET_FINAL=`grep "Final model:" ${LOG} | awk '{print $3}'`
+# set -x
 
-time ./tools/test_net.py --gpu ${GPU_ID} \
-  --def models/${PT_DIR}/${NET}/faster_rcnn_alt_opt/faster_rcnn_test.pt \
-  --net ${NET_FINAL} \
-  --imdb ${TEST_IMDB} \
-  --cfg experiments/cfgs/faster_rcnn_alt_opt.yml \
-  ${EXTRA_ARGS}
+# time ./tools/test_net.py --gpu ${GPU_ID} \
+#   --def models/${PT_DIR}/${NET}/faster_rcnn_alt_opt/faster_rcnn_test.pt \
+#   --net ${NET_FINAL} \
+#   --imdb ${TEST_IMDB} \
+#   --cfg experiments/cfgs/faster_rcnn_alt_opt.yml \
+#   ${EXTRA_ARGS}

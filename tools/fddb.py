@@ -1,17 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
-# --------------------------------------------------------
-# Faster R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
-"""
-Demo script showing detections in sample images.
-
-See README.md for installation instructions before running.
-"""
 
 import matplotlib
 matplotlib.use('Agg')
@@ -36,7 +24,7 @@ NETS = {'vgg16': ('VGG16',
                   'ZF_faster_rcnn_final.caffemodel')}
 
 
-def vis_detections(im, class_name, dets, im_file, thresh=0.5):
+def vis_detections(im, class_name, dets, output, thresh=0.5):
     """Draw detected bounding boxes."""
     inds = np.where(dets[:, -1] >= thresh)[0]
     if len(inds) == 0:
@@ -66,15 +54,13 @@ def vis_detections(im, class_name, dets, im_file, thresh=0.5):
                   fontsize=14)
     plt.axis('off')
     plt.tight_layout()
-    # plt.draw()
-    output = os.path.dirname(im_file) + '/out_' + os.path.basename(im_file).split('.')[0] + '.png'
     plt.savefig(output)
+    plt.close('all')
 
-def demo(net, image_name):
+def demo(net, im_file, output):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Load the demo image
-    im_file = os.path.join(cfg.DATA_DIR, 'demo', image_name)
     im = cv2.imread(im_file)
 
     # Detect all object classes and regress object bounds
@@ -88,6 +74,7 @@ def demo(net, image_name):
     # Visualize detections for each class
     CONF_THRESH = 0.8
     NMS_THRESH = 0.3
+    dets = None
     for cls_ind, cls in enumerate(CLASSES[1:]):
         cls_ind += 1 # because we skipped background
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
@@ -96,7 +83,14 @@ def demo(net, image_name):
                           cls_scores[:, np.newaxis])).astype(np.float32)
         keep = nms(dets, NMS_THRESH)
         dets = dets[keep, :]
-        vis_detections(im, cls, dets, im_file, thresh=CONF_THRESH)
+        vis_detections(im, cls, dets, output, thresh=CONF_THRESH)
+        inds = np.where(dets[:, -1] >= CONF_THRESH)[0]
+        if len(inds) != 0:
+            dets = dets[inds]
+        else:
+            dets = []
+    return dets
+
 
 def parse_args():
     """Parse input arguments."""
@@ -146,10 +140,25 @@ if __name__ == '__main__':
     for i in xrange(2):
         _, _= im_detect(net, im)
 
-    im_names = ['01.jpg', '02.jpg', '03.jpg', '04.jpg', '05.jpg']
-    for im_name in im_names:
-        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Demo for data/demo/{}'.format(im_name)
-        demo(net, im_name)
-
-    plt.show()
+    # test on fddb
+    for i in xrange(10):
+        txt_in = cfg.FDDB_DIR + '/FDDB-folds/FDDB-fold-%02d.txt'%(i + 1)
+        txt_out = cfg.FDDB_DIR + '/result/fold-%02d-out.txt'%(i + 1)
+        fin = open(txt_in, 'r')
+        fout = open(txt_out, 'w')
+        for line in fin.readlines():
+            line = line.strip()
+            im_file = cfg.FDDB_DIR + '/images/' + line + '.jpg'
+            out_file = cfg.FDDB_DIR + '/result/images/' + line.replace('/', '-') + '.jpg'
+            timer = Timer()
+            timer.tic()
+            dets = demo(net, im_file, out_file)
+            timer.toc()
+            print 'detect this image costs', timer.total_time, 's'
+            fout.write('%s\n'%line)
+            fout.write('%d\n'%len(dets))
+            for det in dets:
+                x1, y1, x2, y2, score = det
+                fout.write('%d %d %d %d %lf\n'%(int(x1), int(y1), int(x2 - x1), int(y2 - y1), score))
+        fin.close()
+        fout.close()
